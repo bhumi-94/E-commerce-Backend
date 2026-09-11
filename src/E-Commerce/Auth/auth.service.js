@@ -1,6 +1,14 @@
 const { getDb } = require("../../Configurations/db.config");
-const { hashPassword , comparePassword } = require("../../utils/password");
+const { hashPassword, comparePassword } = require("../../utils/password");
 
+const {
+  generateResetToken,
+  hashResetToken,
+} = require("../../utils/resetTokens");
+
+const { sendPasswordResetEmail } = require("../../utils/mailer");
+
+//register service
 const registerUserService = async ({
   first_name,
   last_name,
@@ -9,10 +17,9 @@ const registerUserService = async ({
   phone,
 }) => {
   const db = getDb();
-
   const [existingUsers] = await db.execute(
     "SELECT id FROM users WHERE email = ? LIMIT 1",
-    [email]
+    [email],
   );
 
   if (existingUsers.length > 0) {
@@ -27,13 +34,7 @@ const registerUserService = async ({
     `INSERT INTO users
       (first_name, last_name, email, password, phone)
      VALUES (?, ?, ?, ?, ?)`,
-    [
-      first_name,
-      last_name,
-      email,
-      hashedPassword,
-      phone,
-    ]
+    [first_name, last_name, email, hashedPassword, phone],
   );
 
   const [users] = await db.execute(
@@ -48,11 +49,13 @@ const registerUserService = async ({
       created_at
      FROM users
      WHERE id = ?`,
-    [result.insertId]
+    [result.insertId],
   );
 
   return users[0];
 };
+
+//login service
 const loginUserService = async ({ email, password }) => {
   const db = getDb();
 
@@ -69,7 +72,7 @@ const loginUserService = async ({ email, password }) => {
      FROM users
      WHERE email = ?
      LIMIT 1`,
-    [email]
+    [email],
   );
 
   if (users.length === 0) {
@@ -86,10 +89,7 @@ const loginUserService = async ({ email, password }) => {
     throw error;
   }
 
-  const isPasswordValid = await comparePassword(
-    password,
-    user.password
-  );
+  const isPasswordValid = await comparePassword(password, user.password);
 
   if (!isPasswordValid) {
     const error = new Error("Invalid email or password");
@@ -102,7 +102,119 @@ const loginUserService = async ({ email, password }) => {
   return user;
 };
 
+//forget password  service
+const forgotPasswordService = async (email) => {
+  const db = getDb();
+
+  const [users] = await db.execute(
+    `SELECT id, first_name, email
+     FROM users
+     WHERE email = ?
+     LIMIT 1`,
+    [email],
+  );
+
+  if (users.length === 0) {
+    return;
+  }
+
+  const user = users[0];
+
+  await db.execute(
+    `DELETE FROM password_reset_tokens
+     WHERE user_id = ?`,
+    [user.id],
+  );
+  const resetToken = generateResetToken();
+
+  const tokenHash = hashResetToken(resetToken);
+
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  await db.execute(
+    `INSERT INTO password_reset_tokens
+      (user_id, token_hash, expires_at)
+     VALUES (?, ?, ?)`,
+    [user.id, tokenHash, expiresAt],
+  );
+
+  const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+
+  await sendPasswordResetEmail(user.email, resetUrl);
+};
+// reset password
+
+const resetPasswordService = async (token, newPassword) => {
+  const db = getDb();
+
+  // Hash token received from frontend
+  const tokenHash = hashResetToken(token);
+
+  const [tokens] = await db.execute(
+    `SELECT
+      id,
+      user_id,
+      expires_at
+     FROM password_reset_tokens
+     WHERE token_hash = ?
+     LIMIT 1`,
+    [tokenHash],
+  );
+
+  // Token doesn't exist
+  if (tokens.length === 0) {
+    const error = new Error("Invalid or expired reset link");
+
+    error.statusCode = 400;
+
+    throw error;
+  }
+
+  const resetRecord = tokens[0];
+
+  // Check expiration
+  const currentTime = new Date();
+  const expiryTime = new Date(resetRecord.expires_at);
+
+  if (currentTime > expiryTime) {
+    await db.execute(
+      `DELETE FROM password_reset_tokens
+       WHERE id = ?`,
+      [resetRecord.id],
+    );
+
+    const error = new Error("This reset link has expired");
+
+    error.statusCode = 400;
+
+    throw error;
+  }
+
+  // Hash new password
+  const hashedPassword = await hashPassword(newPassword);
+
+  // THIS IS THE IMPORTANT DATABASE UPDATE
+  const [result] = await db.execute(
+    `UPDATE users
+     SET password = ?
+     WHERE id = ?`,
+    [hashedPassword, resetRecord.user_id],
+  );
+
+  console.log("PASSWORD UPDATE RESULT:", result.affectedRows);
+
+  // Delete token so it can't be reused
+  await db.execute(
+    `DELETE FROM password_reset_tokens
+     WHERE id = ?`,
+    [resetRecord.id],
+  );
+
+  return true;
+};
 module.exports = {
   registerUserService,
-  loginUserService
+  loginUserService,
+  resetPasswordService,
+  forgotPasswordService,
 };
