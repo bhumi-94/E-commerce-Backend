@@ -126,9 +126,7 @@ const forgotPasswordService = async (email) => {
     [user.id],
   );
   const resetToken = generateResetToken();
-
   const tokenHash = hashResetToken(resetToken);
-
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
   await db.execute(
@@ -142,12 +140,10 @@ const forgotPasswordService = async (email) => {
 
   await sendPasswordResetEmail(user.email, resetUrl);
 };
-// reset password
 
 const resetPasswordService = async (token, newPassword) => {
   const db = getDb();
 
-  // Hash token received from frontend
   const tokenHash = hashResetToken(token);
 
   const [tokens] = await db.execute(
@@ -161,7 +157,6 @@ const resetPasswordService = async (token, newPassword) => {
     [tokenHash],
   );
 
-  // Token doesn't exist
   if (tokens.length === 0) {
     const error = new Error("Invalid or expired reset link");
 
@@ -189,11 +184,8 @@ const resetPasswordService = async (token, newPassword) => {
 
     throw error;
   }
-
-  // Hash new password
   const hashedPassword = await hashPassword(newPassword);
 
-  // THIS IS THE IMPORTANT DATABASE UPDATE
   const [result] = await db.execute(
     `UPDATE users
      SET password = ?
@@ -203,7 +195,6 @@ const resetPasswordService = async (token, newPassword) => {
 
   console.log("PASSWORD UPDATE RESULT:", result.affectedRows);
 
-  // Delete token so it can't be reused
   await db.execute(
     `DELETE FROM password_reset_tokens
      WHERE id = ?`,
