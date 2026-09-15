@@ -40,6 +40,7 @@ const registerUserController = async (req, res, next) => {
   }
 };
 // loginUserController
+
 const loginUserController = async (req, res, next) => {
   try {
     const { email, password, rememberMe = false } = req.body;
@@ -50,14 +51,11 @@ const loginUserController = async (req, res, next) => {
         message: "Email and password are required",
       });
     }
-
     const user = await authService.loginUserService({
       email: email.trim().toLowerCase(),
       password,
     });
-
     const tokenExpiry = rememberMe ? "30d" : "1d";
-
     const token = jwt.sign(
       {
         id: user.id,
@@ -92,7 +90,7 @@ const loginUserController = async (req, res, next) => {
     next(error);
   }
 };
-// forgotPasswordController
+// forgotPasswordController 
 const forgotPasswordController = async (req, res, next) => {
   try {
     const { email } = req.body;
