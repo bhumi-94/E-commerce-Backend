@@ -64,7 +64,6 @@ const updateProfileService = async (
   }
 
   const finalProfileImage = profile_image || users[0].profile_image || null;
-  console.log("IMAGE TO SAVE:", finalProfileImage);
   await db.execute(
     `UPDATE users
      SET
