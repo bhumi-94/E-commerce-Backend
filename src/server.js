@@ -7,6 +7,8 @@ const { connectDatabase } = require("../src/Configurations/db.config");
 
 const authRoutes = require("../src/E-Commerce/Auth/auth.routes");
 const profileRoutes = require("../src/E-Commerce/Profile/profile.routes");
+const categoryRoutes = require("../src/E-Commerce/Category/category.routes");
+const productRoutes = require("../src/E-Commerce/Product/product.routes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -26,12 +28,6 @@ app.use(
 );
 app.use(cookieParser());
 
-console.log("SERVER DIRECTORY:", __dirname);
-console.log(
-  "UPLOAD DIRECTORY:",
-  path.join(__dirname, "uploads")
-);
-
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "../uploads"))
@@ -46,6 +42,8 @@ app.get("/", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api/products", productRoutes);
 
 app.use((err, req, res, next) => {
   console.error("ERROR:", err);
@@ -61,7 +59,6 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     await connectDatabase()
-
     app.listen(PORT, () => {
       console.log(
         `Nexora server running on http://localhost:${PORT}`
@@ -75,5 +72,4 @@ const startServer = async () => {
     process.exit(1);
   }
 };
-
 startServer();

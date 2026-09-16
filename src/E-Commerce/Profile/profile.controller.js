@@ -23,7 +23,6 @@ const updateProfileController = async (req, res, next) => {
     if (req.file) {
       profileImage = `/uploads/profile/${req.file.filename}`;
     }
-
     const user = await profileService.updateProfileService(userId, {
       first_name,
       last_name,
@@ -40,7 +39,6 @@ const updateProfileController = async (req, res, next) => {
     });
   } catch (error) {
     console.error("UPDATE PROFILE CONTROLLER ERROR:", error);
-
     next(error);
   }
 };
