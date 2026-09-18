@@ -5,14 +5,12 @@ const jwt = require("jsonwebtoken");
 const registerUserController = async (req, res, next) => {
   try {
     const { first_name, last_name, email, phone, password } = req.body;
-
     if (!first_name || !last_name || !email || !phone || !password) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
       });
     }
-
     if (password.length < 8) {
       return res.status(400).json({
         success: false,
@@ -90,7 +88,7 @@ const loginUserController = async (req, res, next) => {
     next(error);
   }
 };
-// forgotPasswordController 
+// forgotPasswordController
 const forgotPasswordController = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -158,9 +156,38 @@ const resetPasswordController = async (req, res, next) => {
   }
 };
 
+const getCurrentUserController = async (req, res, next) => {
+  try {
+    const user = await authService.getCurrentUserService(req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        user,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+const logoutController = (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Logout successful",
+  });
+};
+
 module.exports = {
   registerUserController,
   loginUserController,
   forgotPasswordController,
-  resetPasswordController
+  resetPasswordController,
+  getCurrentUserController,
+  logoutController
 };
