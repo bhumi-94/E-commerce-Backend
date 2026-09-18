@@ -14,12 +14,9 @@ const deleteCategoryImage = (imagePath) => {
   );
 
   if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
-
-    console.log("Category image deleted:", filePath);
+    fs.unlinkSync(filePath); 
   }
 };
-
 // Get all categories
 const getAllCategoriesService = async () => {
   const db = getDb();
@@ -38,7 +35,6 @@ const getAllCategoriesService = async () => {
 
   return categories;
 };
-
 // Get one category
 const getCategoryByIdService = async (categoryId) => {
   const db = getDb();
@@ -65,7 +61,6 @@ const getCategoryByIdService = async (categoryId) => {
 
   return categories[0];
 };
-
 // Create category
 const createCategoryService = async ({ name, image }) => {
   const db = getDb();
@@ -99,7 +94,6 @@ const createCategoryService = async ({ name, image }) => {
 
   return getCategoryByIdService(result.insertId);
 };
-
 // Update category
 const updateCategoryService = async (
   categoryId,
@@ -135,7 +129,6 @@ const updateCategoryService = async (
 
   return getCategoryByIdService(categoryId);
 };
-
 // Delete category
 const deleteCategoryService = async (categoryId) => {
   const db = getDb();
@@ -165,7 +158,6 @@ const deleteCategoryService = async (categoryId) => {
     throw error;
   }
 };
-
 module.exports = {
   getAllCategoriesService,
   getCategoryByIdService,

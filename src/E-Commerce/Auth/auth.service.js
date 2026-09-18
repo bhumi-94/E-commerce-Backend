@@ -58,7 +58,6 @@ const registerUserService = async ({
 //login service
 const loginUserService = async ({ email, password }) => {
   const db = getDb();
-
   const [users] = await db.execute(
     `SELECT
       id,
@@ -68,7 +67,8 @@ const loginUserService = async ({ email, password }) => {
       phone,
       password,
       role,
-      is_active
+      is_active,
+      profile_image
      FROM users
      WHERE email = ?
      LIMIT 1`,
@@ -193,7 +193,7 @@ const resetPasswordService = async (token, newPassword) => {
     [hashedPassword, resetRecord.user_id],
   );
 
-  console.log("PASSWORD UPDATE RESULT:", result.affectedRows);
+  // console.log("PASSWORD UPDATE RESULT:", result.affectedRows);
 
   await db.execute(
     `DELETE FROM password_reset_tokens
@@ -203,9 +203,44 @@ const resetPasswordService = async (token, newPassword) => {
 
   return true;
 };
+const getCurrentUserService = async (userId) => {
+  const db = getDb();
+
+  const [users] = await db.execute(
+    `SELECT
+      id,
+      first_name,
+      last_name,
+      email,
+      phone,
+      role,
+      is_active
+     FROM users
+     WHERE id = ?
+     LIMIT 1`,
+    [userId],
+  );
+
+  if (users.length === 0) {
+    const error = new Error("User not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const user = users[0];
+
+  if (!user.is_active) {
+    const error = new Error("Your account is inactive");
+    error.statusCode = 403;
+    throw error;
+  }
+
+  return user;
+};
 module.exports = {
   registerUserService,
   loginUserService,
   resetPasswordService,
   forgotPasswordService,
+  getCurrentUserService,
 };
