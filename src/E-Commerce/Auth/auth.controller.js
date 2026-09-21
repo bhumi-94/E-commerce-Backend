@@ -41,7 +41,7 @@ const registerUserController = async (req, res, next) => {
 
 const loginUserController = async (req, res, next) => {
   try {
-    const { email, password, rememberMe = false } = req.body;
+    const { email, password } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -49,11 +49,13 @@ const loginUserController = async (req, res, next) => {
         message: "Email and password are required",
       });
     }
+
     const user = await authService.loginUserService({
       email: email.trim().toLowerCase(),
       password,
     });
-    const tokenExpiry = rememberMe ? "30d" : "1d";
+
+    // JWT valid for 30 days
     const token = jwt.sign(
       {
         id: user.id,
@@ -62,20 +64,18 @@ const loginUserController = async (req, res, next) => {
       },
       process.env.JWT_SECRET_KEY,
       {
-        expiresIn: tokenExpiry,
+        expiresIn: "30d",
       },
     );
-    const cookieOptions = {
+
+    // Persistent cookie
+    res.cookie("token", token, {
       httpOnly: true,
       secure: false,
       sameSite: "lax",
-    };
-
-    if (rememberMe) {
-      cookieOptions.maxAge = 30 * 24 * 60 * 60 * 1000;
-    }
-
-    res.cookie("token", token, cookieOptions);
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      path: "/",
+    });
 
     return res.status(200).json({
       success: true,
@@ -170,11 +170,13 @@ const getCurrentUserController = async (req, res, next) => {
     next(error);
   }
 };
-const logoutController = (req, res) => {
+
+const logoutUserController = async (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
     secure: false,
     sameSite: "lax",
+    path: "/",
   });
 
   return res.status(200).json({
@@ -189,5 +191,5 @@ module.exports = {
   forgotPasswordController,
   resetPasswordController,
   getCurrentUserController,
-  logoutController
+  logoutUserController,
 };

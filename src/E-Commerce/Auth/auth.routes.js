@@ -9,7 +9,7 @@ router.post("/login", authController.loginUserController);
 router.post("/forgot-password", authController.forgotPasswordController);
 router.post("/reset-password", authController.resetPasswordController);
 router.get("/me", authMiddleware, authController.getCurrentUserController);
-router.post("/logout", authController.logoutController);
+router.post("/logout", authController.logoutUserController);
 
 
 module.exports = router;
