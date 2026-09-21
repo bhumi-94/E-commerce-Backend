@@ -96,9 +96,7 @@ const loginUserService = async ({ email, password }) => {
     error.statusCode = 401;
     throw error;
   }
-
   delete user.password;
-
   return user;
 };
 
