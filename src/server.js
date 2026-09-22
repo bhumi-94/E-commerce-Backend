@@ -19,21 +19,18 @@ app.use(
   cors({
     origin: "http://localhost:5173",
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 
 app.use(
   express.urlencoded({
     extended: true,
-  })
+  }),
 );
 app.use(cookieParser());
 
-app.use(
-  "/uploads",
-  express.static(path.join(__dirname, "../uploads"))
-);
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -45,8 +42,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
-app.use("/api/cart" , cartRoutes)
-app.use("/api/wishlist" , wishlistRoutes)
+app.use("/api/cart", cartRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 
 app.use((err, req, res, next) => {
   console.error("ERROR:", err);
@@ -61,17 +58,12 @@ app.use((err, req, res, next) => {
 
 const startServer = async () => {
   try {
-    await connectDatabase()
+    await connectDatabase();
     app.listen(PORT, () => {
-      console.log(
-        `Nexora server running on http://localhost:${PORT}`
-      );
+      console.log(`Nexora server running on http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error(
-      "Failed to start server:",
-      error.message
-    );
+    console.error("Failed to start server:", error.message);
     process.exit(1);
   }
 };
