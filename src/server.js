@@ -12,6 +12,7 @@ const productRoutes = require("../src/E-Commerce/Product/product.routes");
 const cartRoutes = require("../src/E-Commerce/Cart/cart.routes");
 const wishlistRoutes = require("../src/E-Commerce/Wishlist/wishlist.routes");
 const feedbackRoutes = require("../src/E-Commerce/Feedback/feedback.routes");
+const addressRoutes = require("../src/E-Commerce/Address/address.routes")
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -46,6 +47,7 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/feedback", feedbackRoutes);
+app.use("/api/addresses", addressRoutes);
 
 app.use((err, req, res, next) => {
   console.error("ERROR:", err);
