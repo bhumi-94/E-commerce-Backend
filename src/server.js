@@ -15,6 +15,8 @@ const feedbackRoutes = require("../src/E-Commerce/Feedback/feedback.routes");
 const addressRoutes = require("../src/E-Commerce/Address/address.routes");
 const paymentRoutes = require("../src/E-Commerce/Payment/payment.routes");
 const orderRoutes = require("../src/E-Commerce/Order/order.routes");
+const notificationRoutes = require("../src/E-Commerce/Notifications/notification.routes");
+const settingsRoutes = require("../src/E-Commerce/Settings/settings.routes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -52,6 +54,8 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/payment-methods", paymentRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/settings", settingsRoutes);
 
 app.use((err, req, res, next) => {
   console.error("ERROR:", err);
