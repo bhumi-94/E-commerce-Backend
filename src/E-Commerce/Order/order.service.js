@@ -1,4 +1,5 @@
 const { getDb } = require("../../Configurations/db.config");
+const { createNotification } = require("../Notifications/notification.service");
 
 const createOrderService = async (
   userId,
@@ -8,7 +9,6 @@ const createOrderService = async (
 ) => {
   const db = getDb();
 
-  // Get user's cart
   const [cartItems] = await db.execute(
     `
     SELECT
@@ -32,7 +32,6 @@ const createOrderService = async (
     throw error;
   }
 
-  // Verify address belongs to user
   const [addresses] = await db.execute(
     `
     SELECT id
@@ -50,7 +49,6 @@ const createOrderService = async (
     throw error;
   }
 
-  // Verify payment method belongs to user
   if (paymentMethodId) {
     const [paymentMethods] = await db.execute(
       `
@@ -70,7 +68,6 @@ const createOrderService = async (
     }
   }
 
-  // Check stock and calculate subtotal
   let subtotal = 0;
 
   for (const item of cartItems) {
@@ -93,11 +90,9 @@ const createOrderService = async (
 
   const totalAmount = subtotal + Number(shippingAmount);
 
-  // Start transaction
   await db.beginTransaction();
 
   try {
-    // Create order
     const [orderResult] = await db.execute(
       `INSERT INTO orders
             (
@@ -125,7 +120,6 @@ const createOrderService = async (
 
     const orderId = orderResult.insertId;
 
-    // Add order items
     for (const item of cartItems) {
       const itemSubtotal = Number(item.price) * Number(item.quantity);
 
@@ -152,7 +146,6 @@ const createOrderService = async (
         ],
       );
 
-      // Reduce product stock
       await db.execute(
         `
         UPDATE products
@@ -163,7 +156,6 @@ const createOrderService = async (
       );
     }
 
-    // Clear cart
     await db.execute(
       `
       DELETE FROM cart_items
@@ -173,6 +165,13 @@ const createOrderService = async (
     );
 
     await db.commit();
+    await createNotification({
+      userId,
+      title: "Order Placed Successfully",
+      message: `Your order #${orderId} has been placed successfully.`,
+      type: "order",
+      referenceId: orderId,
+    });
 
     return {
       orderId,
