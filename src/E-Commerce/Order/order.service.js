@@ -155,15 +155,6 @@ const createOrderService = async (
         [item.quantity, item.product_id],
       );
     }
-
-    await db.execute(
-      `
-      DELETE FROM cart_items
-      WHERE user_id = ?
-      `,
-      [userId],
-    );
-
     await db.commit();
     await createNotification({
       userId,
