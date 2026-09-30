@@ -88,6 +88,55 @@ const loginUserController = async (req, res, next) => {
     next(error);
   }
 };
+// Google Login Controller
+const googleLoginController = async (req, res, next) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: "Google credential is required",
+      });
+    }
+
+    const user = await authService.googleLoginService(credential);
+
+    // Create JWT exactly like normal login
+    const token = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+      process.env.JWT_SECRET_KEY,
+      {
+        expiresIn: "30d",
+      },
+    );
+
+    // Store JWT in HTTP-only cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      path: "/",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Google login successful",
+      data: {
+        user,
+      },
+    });
+  } catch (error) {
+    console.error("GOOGLE LOGIN ERROR:", error);
+    next(error);
+  }
+};
+
 // forgotPasswordController
 const forgotPasswordController = async (req, res, next) => {
   try {
@@ -188,6 +237,7 @@ const logoutUserController = async (req, res) => {
 module.exports = {
   registerUserController,
   loginUserController,
+  googleLoginController,
   forgotPasswordController,
   resetPasswordController,
   getCurrentUserController,

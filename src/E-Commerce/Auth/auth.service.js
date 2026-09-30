@@ -1,5 +1,11 @@
 const { getDb } = require("../../Configurations/db.config");
 const { hashPassword, comparePassword } = require("../../utils/password");
+const crypto = require("crypto");
+const { OAuth2Client } = require("google-auth-library");
+
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 
 const {
   generateResetToken,
@@ -98,6 +104,163 @@ const loginUserService = async ({ email, password }) => {
   }
   delete user.password;
   return user;
+};
+
+// Google login servic
+const googleLoginService = async (credential) => {
+  const db = getDb();
+
+  const ticket = await googleClient.verifyIdToken({
+    idToken: credential,
+    audience: process.env.GOOGLE_CLIENT_ID,
+  });
+
+  const payload = ticket.getPayload();
+
+  if (!payload) {
+    const error = new Error("Invalid Google credential");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const {
+    sub: googleId,
+    email,
+    email_verified,
+    given_name,
+    family_name,
+  } = payload;
+
+  if (!email || !email_verified) {
+    const error = new Error("Google email could not be verified");
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const [googleUsers] = await db.execute(
+    `
+    SELECT
+      id,
+      first_name,
+      last_name,
+      email,
+      phone,
+      role,
+      is_active,
+      profile_image
+    FROM users
+    WHERE google_id = ?
+    LIMIT 1
+    `,
+    [googleId],
+  );
+
+  if (googleUsers.length > 0) {
+    const user = googleUsers[0];
+
+    if (!user.is_active) {
+      const error = new Error("Your account is inactive");
+      error.statusCode = 403;
+      throw error;
+    }
+
+    return user;
+  }
+  const [existingUsers] = await db.execute(
+    `
+    SELECT
+      id,
+      first_name,
+      last_name,
+      email,
+      phone,
+      role,
+      is_active,
+      profile_image
+    FROM users
+    WHERE email = ?
+    LIMIT 1
+    `,
+    [email.toLowerCase()],
+  );
+
+  if (existingUsers.length > 0) {
+    const user = existingUsers[0];
+
+    if (!user.is_active) {
+      const error = new Error("Your account is inactive");
+      error.statusCode = 403;
+      throw error;
+    }
+    await db.execute(
+      `
+      UPDATE users
+      SET google_id = ?
+      WHERE id = ?
+      `,
+      [googleId, user.id],
+    );
+
+    user.google_id = googleId;
+
+    return user;
+  }
+
+  const firstName =
+    given_name?.trim() ||
+    email
+      .split("@")[0]
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .slice(0, 50) ||
+    "Google User";
+
+  const lastName = family_name?.trim() || null;
+  const randomPassword = crypto.randomBytes(32).toString("hex");
+  const hashedPassword = await hashPassword(randomPassword);
+
+  const [result] = await db.execute(
+    `
+    INSERT INTO users
+    (
+      first_name,
+      last_name,
+      email,
+      password,
+      phone,
+      google_id
+    )
+    VALUES (?, ?, ?, ?, ?, ?)
+    `,
+    [
+      firstName,
+      lastName,
+      email.toLowerCase(),
+      hashedPassword,
+      null,
+      googleId,
+    ],
+  );
+
+  // 4. Fetch the newly created user
+  const [newUsers] = await db.execute(
+    `
+    SELECT
+      id,
+      first_name,
+      last_name,
+      email,
+      phone,
+      role,
+      is_active,
+      profile_image
+    FROM users
+    WHERE id = ?
+    LIMIT 1
+    `,
+    [result.insertId],
+  );
+
+  return newUsers[0];
 };
 
 //forget password  service
@@ -235,10 +398,12 @@ const getCurrentUserService = async (userId) => {
 
   return user;
 };
+
 module.exports = {
   registerUserService,
   loginUserService,
   resetPasswordService,
   forgotPasswordService,
   getCurrentUserService,
+  googleLoginService,
 };
