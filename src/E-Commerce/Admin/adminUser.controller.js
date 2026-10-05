@@ -1,4 +1,3 @@
-// const adminUserService = require("./adminUser.service");
 const {
   getAllUsersService,
   deactivateUserService,
@@ -65,39 +64,3 @@ module.exports = {
   deactivateUser,
   activateUser,
 };
-
-// const getAllUsers = async (req, res, next) => {
-//   try {
-//     const users = await getAllUsersService();
-
-//     return res.status(200).json({
-//       success: true,
-//       users,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
-// const deactivateUser = async (req, res, next) => {
-//   try {
-//     const { id } = req.params;
-
-//     const result = await deactivateUserService(
-//       id,
-//       req.user.id,
-//     );
-
-//     return res.status(200).json({
-//       success: true,
-//       ...result,
-//     });
-//   } catch (error) {
-//     next(error);
-//   }
-// };
-
-// module.exports = {
-//   getAllUsers,
-//   deactivateUser,
-// };
