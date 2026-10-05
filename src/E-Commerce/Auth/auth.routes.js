@@ -1,6 +1,8 @@
 const express = require("express");
+
 const authController = require("../Auth/auth.controller");
 const authMiddleware = require("../../middleware/auth.middleware");
+
 const router = express.Router();
 
 
@@ -14,4 +16,6 @@ router.post("/logout", authController.logoutUserController);
 
 
 module.exports = router;
+
+
 
