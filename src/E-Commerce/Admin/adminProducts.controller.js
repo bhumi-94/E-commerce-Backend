@@ -63,25 +63,3 @@ module.exports = {
   getAllAdminProducts,
   addAdminProduct,
 };
-
-// const { getAllAdminProductsService } = require("./adminProduct.service");
-
-// const getAllAdminProducts = async (req, res) => {
-//   try {
-//     const products = await getAllAdminProductsService();
-
-//     return res.status(200).json({
-//       success: true,
-//       products,
-//     });
-//   } catch (error) {
-//     console.log(error);
-//     return res.status(error.statusCode || 500).json({
-//       success: false,
-//       message: error.message || "Failed to fetch products",
-//     });
-//   }
-// };
-// module.exports = {
-//   getAllAdminProducts,
-// };
