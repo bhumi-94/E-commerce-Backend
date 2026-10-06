@@ -10,7 +10,8 @@ const getAllAdminProductsService = async () => {
       p.name,
       p.description,
       p.price,
-      p.stock_quantity AS stock,
+      p.platform_fee,
+      (p.price + p.platform_fee) AS customer_price,
       p.image,
       p.is_active,
       p.is_featured,
@@ -31,12 +32,22 @@ const addAdminProductService = async ({
   category_id,
   description,
   price,
+  platform_fee,
   stock_quantity,
   image,
   is_featured,
 }) => {
   const db = getDb();
-
+  if (
+    stock_quantity === undefined ||
+    stock_quantity === null ||
+    stock_quantity === "" ||
+    Number(stock_quantity) < 0
+  ) {
+    const error = new Error("Valid stock quantity is required");
+    error.statusCode = 400;
+    throw error;
+  }
   const [result] = await db.execute(
     `
     INSERT INTO products (
@@ -44,19 +55,21 @@ const addAdminProductService = async ({
       name,
       description,
       price,
+      platform_fee,
       stock_quantity,
       image,
       is_active,
       is_featured
     )
-    VALUES (?, ?, ?, ?, ?, ?, 1, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
     `,
     [
       category_id,
       name,
       description || null,
       price,
-      stock_quantity || 0,
+      platform_fee || 0,
+      stock_quantity,
       image || null,
       is_featured ? 1 : 0,
     ],
@@ -70,7 +83,9 @@ const addAdminProductService = async ({
       p.name,
       p.description,
       p.price,
-      p.stock_quantity AS stock,
+      p.platform_fee,
+      (p.price + p.platform_fee) AS customer_price,
+      p.stock_quantity,
       p.image,
       p.is_active,
       p.is_featured,

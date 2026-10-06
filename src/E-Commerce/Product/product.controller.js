@@ -36,7 +36,6 @@ const createProductController = async (req, res, next) => {
       name,
       description,
       price,
-      stock_quantity,
       is_active,
       is_featured,
     } = req.body;
@@ -46,7 +45,6 @@ const createProductController = async (req, res, next) => {
       name,
       description,
       price,
-      stock_quantity,
       image,
       is_active,
       is_featured,
@@ -70,7 +68,6 @@ const updateProductController = async (req, res, next) => {
       name,
       description,
       price,
-      stock_quantity,
       is_active,
       is_featured,
     } = req.body;
@@ -82,7 +79,6 @@ const updateProductController = async (req, res, next) => {
       name,
       description,
       price,
-      stock_quantity,
       image,
       is_active,
       is_featured,

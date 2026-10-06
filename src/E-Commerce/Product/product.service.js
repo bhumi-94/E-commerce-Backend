@@ -1,5 +1,6 @@
 const { getDb } = require("../../Configurations/db.config");
 const fs = require("fs");
+const { platform } = require("os");
 const path = require("path");
 
 const deleteProductImage = (imagePath) => {
@@ -30,6 +31,8 @@ const getAllProductsService = async () => {
       p.name,
       p.description,
       p.price,
+      p.platform_fee,
+      (p.price + p.platform_fee) AS customer_price,
       p.stock_quantity,
       p.image,
       p.is_active,
@@ -48,7 +51,6 @@ const getAllProductsService = async () => {
 // Get one product by ID
 const getProductByIdService = async (productId) => {
   const db = getDb();
-
   const [products] = await db.execute(
     `SELECT
       p.id,
@@ -57,6 +59,8 @@ const getProductByIdService = async (productId) => {
       p.name,
       p.description,
       p.price,
+      p.platform_fee,
+      (p.price + p.platform_fee) AS customer_price,
       p.stock_quantity,
       p.image,
       p.is_active,
@@ -86,7 +90,6 @@ const createProductService = async ({
   name,
   description,
   price,
-  stock_quantity,
   image,
   is_active,
   is_featured,
@@ -128,14 +131,13 @@ const createProductService = async ({
     throw error;
   }
 
-  // Validate stock
   if (
-    stock_quantity === undefined ||
-    stock_quantity === null ||
-    stock_quantity === "" ||
-    Number(stock_quantity) < 0
+    platform_fee === undefined ||
+    platform_fee === null ||
+    platform_fee === "" ||
+    Number(platform_fee) < 0
   ) {
-    const error = new Error("Valid stock quantity is required");
+    const error = new Error("Valid Platform fee is required");
     error.statusCode = 400;
     throw error;
   }
@@ -147,18 +149,16 @@ const createProductService = async ({
       name,
       description,
       price,
-      stock_quantity,
       image,
       is_active,
       is_featured
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [
       category_id,
       name.trim(),
       description ? description.trim() : null,
       Number(price),
-      Number(stock_quantity),
       image || null,
       is_active !== undefined ? is_active : true,
       is_featured !== undefined ? is_featured : false,
@@ -176,7 +176,7 @@ const updateProductService = async (
     name,
     description,
     price,
-    stock_quantity,
+    platform_fee,
     image,
     is_active,
     is_featured,
@@ -186,7 +186,6 @@ const updateProductService = async (
 
   const existingProduct = await getProductByIdService(productId);
 
-  // Validate category
   if (category_id !== undefined) {
     const [categories] = await db.execute(
       `SELECT id
@@ -204,7 +203,6 @@ const updateProductService = async (
     }
   }
 
-  // Validate name
   if (!name || !name.trim()) {
     const error = new Error("Product name is required");
     error.statusCode = 400;
@@ -220,10 +218,10 @@ const updateProductService = async (
   const finalPrice =
     price !== undefined ? Number(price) : existingProduct.price;
 
-  const finalStock =
-    stock_quantity !== undefined
-      ? Number(stock_quantity)
-      : existingProduct.stock_quantity;
+  const finalPlatformFee =
+    platform_fee !== undefined
+      ? Number(platform_fee)
+      : Number(existingProduct.platform_fee || 0);
 
   const finalImage = image !== undefined ? image : existingProduct.image;
 
@@ -243,8 +241,8 @@ const updateProductService = async (
     throw error;
   }
 
-  if (finalStock < 0) {
-    const error = new Error("Stock quantity cannot be negative");
+  if (finalPlatformFee < 0) {
+    const error = new Error("Platform fee cannot be negative");
     error.statusCode = 400;
     throw error;
   }
@@ -256,7 +254,7 @@ const updateProductService = async (
        name = ?,
        description = ?,
        price = ?,
-       stock_quantity = ?,
+       platform_fee = ?,
        image = ?,
        is_active = ?,
        is_featured = ?
@@ -266,7 +264,7 @@ const updateProductService = async (
       name.trim(),
       finalDescription ? finalDescription.trim() : null,
       finalPrice,
-      finalStock,
+      finalPlatformFee,
       finalImage,
       finalIsActive,
       finalIsFeatured,
