@@ -23,11 +23,13 @@ const getAllAdminProducts = async (req, res) => {
 
 const addAdminProduct = async (req, res) => {
   try {
+    
     const {
       name,
       category_id,
       description,
       price,
+      platform_fee,
       stock_quantity,
       is_featured,
     } = req.body;
@@ -39,6 +41,7 @@ const addAdminProduct = async (req, res) => {
       category_id,
       description,
       price,
+      platform_fee,
       stock_quantity,
       image,
       is_featured,
