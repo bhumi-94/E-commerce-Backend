@@ -18,14 +18,19 @@ const orderRoutes = require("../src/E-Commerce/Order/order.routes");
 const notificationRoutes = require("../src/E-Commerce/Notifications/notification.routes");
 const settingsRoutes = require("../src/E-Commerce/Settings/settings.routes");
 const adminUserRoutes = require("../src/E-Commerce/Admin/adminUser.routes");
-const adminProductRoutes = require("../src/E-Commerce/Admin/adminProduct.routes")
+const adminProductRoutes = require("../src/E-Commerce/Admin/adminProduct.routes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
   }),
 );
@@ -59,8 +64,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/admin/users", adminUserRoutes);
-app.use("/api/admin/products" , adminProductRoutes)
-
+app.use("/api/admin/products", adminProductRoutes);
 
 app.use((err, req, res, next) => {
   console.error("ERROR:", err);
@@ -76,8 +80,8 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     await connectDatabase();
-    app.listen(PORT, () => {
-      console.log(`Nexora server running on http://localhost:${PORT}`);
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`Nexora server running...`);
     });
   } catch (error) {
     console.error("Failed to start server:", error.message);
