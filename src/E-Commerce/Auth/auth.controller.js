@@ -38,10 +38,9 @@ const registerUserController = async (req, res, next) => {
   }
 };
 // loginUserController
-
 const loginUserController = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({
@@ -55,7 +54,7 @@ const loginUserController = async (req, res, next) => {
       password,
     });
 
-    // JWT valid for 30 days
+    // Create JWT
     const token = jwt.sign(
       {
         id: user.id,
@@ -65,17 +64,29 @@ const loginUserController = async (req, res, next) => {
       process.env.JWT_SECRET_KEY,
       {
         expiresIn: "30d",
-      },
+      }
     );
 
-    // Persistent cookie
-    res.cookie("token", token, {
+    // Cookie configuration for local + production
+    const cookieOptions = {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 30 * 24 * 60 * 60 * 1000,
+
+      // HTTPS is used on Vercel/Render
+      secure: process.env.NODE_ENV === "production",
+
+      // Required for cross-site Vercel → Render cookies
+      sameSite:
+        process.env.NODE_ENV === "production" ? "none" : "lax",
+
       path: "/",
-    });
+    };
+
+    // Remember Me → persistent cookie
+    if (rememberMe) {
+      cookieOptions.maxAge = 30 * 24 * 60 * 60 * 1000; // 30 days
+    }
+
+    res.cookie("token", token, cookieOptions);
 
     return res.status(200).json({
       success: true,
@@ -88,6 +99,9 @@ const loginUserController = async (req, res, next) => {
     next(error);
   }
 };
+
+
+// Google Login Controller
 // Google Login Controller
 const googleLoginController = async (req, res, next) => {
   try {
@@ -102,7 +116,7 @@ const googleLoginController = async (req, res, next) => {
 
     const user = await authService.googleLoginService(credential);
 
-    // Create JWT exactly like normal login
+    // Create JWT
     const token = jwt.sign(
       {
         id: user.id,
@@ -112,15 +126,20 @@ const googleLoginController = async (req, res, next) => {
       process.env.JWT_SECRET_KEY,
       {
         expiresIn: "30d",
-      },
+      }
     );
 
-    // Store JWT in HTTP-only cookie
+    // Google login cookie
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+
+      secure: process.env.NODE_ENV === "production",
+
+      sameSite:
+        process.env.NODE_ENV === "production" ? "none" : "lax",
+
       maxAge: 30 * 24 * 60 * 60 * 1000,
+
       path: "/",
     });
 
