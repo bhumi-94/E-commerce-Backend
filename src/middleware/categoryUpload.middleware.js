@@ -1,27 +1,6 @@
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
+const cloudinaryCategoryStorage = require("./cloudinaryCategoryStorage");
 
-const uploadDirectory = path.join(__dirname, "../../uploads/categories");
-
-if (!fs.existsSync(uploadDirectory)) {
-  fs.mkdirSync(uploadDirectory, {
-    recursive: true,
-  });
-}
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDirectory);
-  },
-
-  filename: (req, file, cb) => {
-    const extension = path.extname(file.originalname);
-
-    const fileName = `category-${Date.now()}${extension}`;
-
-    cb(null, fileName);
-  },
-});
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
@@ -31,8 +10,9 @@ const fileFilter = (req, file, cb) => {
     cb(new Error("Only JPG, JPEG, PNG and WEBP images are allowed"), false);
   }
 };
+
 const uploadCategoryImage = multer({
-  storage,
+  storage: cloudinaryCategoryStorage,
   fileFilter,
   limits: {
     fileSize: 5 * 1024 * 1024,

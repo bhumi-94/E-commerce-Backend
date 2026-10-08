@@ -100,13 +100,9 @@ const loginUserController = async (req, res, next) => {
   }
 };
 
-
-// Google Login Controller
-// Google Login Controller
 const googleLoginController = async (req, res, next) => {
   try {
     const { credential } = req.body;
-
     if (!credential) {
       return res.status(400).json({
         success: false,

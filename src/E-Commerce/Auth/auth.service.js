@@ -3,9 +3,7 @@ const { hashPassword, comparePassword } = require("../../utils/password");
 const crypto = require("crypto");
 const { OAuth2Client } = require("google-auth-library");
 
-
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
 
 const {
   generateResetToken,
@@ -231,14 +229,7 @@ const googleLoginService = async (credential) => {
     )
     VALUES (?, ?, ?, ?, ?, ?)
     `,
-    [
-      firstName,
-      lastName,
-      email.toLowerCase(),
-      hashedPassword,
-      null,
-      googleId,
-    ],
+    [firstName, lastName, email.toLowerCase(), hashedPassword, null, googleId],
   );
 
   // 4. Fetch the newly created user
