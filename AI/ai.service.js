@@ -53,9 +53,6 @@ answer conversationally.
     input: message,
     tools: [searchProductsTool],
   });
-
-  // console.log("GEMINI STEPS:", JSON.stringify(interaction.steps, null, 2));
-
   const functionCall = interaction.steps?.find(
     (step) => step.type === "function_call",
   );
@@ -67,19 +64,11 @@ answer conversationally.
       products: [],
     };
   }
-  // if (!functionCall) {
-  //   console.log("Gemini did not request a product search.");
-  //   return interaction.output_text || "Sorry, I couldn't generate a response.";
-  // }
-
   if (functionCall.name !== "search_nexora_products") {
     throw new Error(`Unexpected tool: ${functionCall.name}`);
   }
 
   const args = functionCall.arguments || {};
-
-  // console.log("PRODUCT TOOL ARGUMENTS:", args);
-
   const products = await searchProducts({
     search: String(args.search || ""),
     maxPrice:
@@ -87,8 +76,6 @@ answer conversationally.
         ? null
         : Number(args.maxPrice),
   });
-
-  // console.log("PRODUCTS RETURNED FROM MYSQL:", products.length);
 
   const finalInteraction = await ai.interactions.create({
     model: MODEL,
@@ -115,6 +102,31 @@ answer conversationally.
   };
 };
 
+const generateProductDescription = async ({
+  name,
+  category,
+  price,
+  features,
+}) => {
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error("GEMINI_API_KEY is not configured");
+  }
+  const prompt = ` You are a professional e-commerce product copywriter for Nexora. Generate a clear, attractive product description using the details below. Product name: ${name} Category: ${category || "Not specified"} Price: ${price ? `₹${price}` : "Not specified"} Product features: ${features || "Not specified"} Rules: - Write in simple, professional English. - Keep the description between 80 and 120 words. - Highlight the product's usefulness and key features. - Do not invent specifications, materials, warranties, ratings, or benefits. - Do not repeat the product name excessively. - Return only the description, without a heading or quotation marks. `;
+
+  const interaction = await ai.interactions.create({
+    model: "gemini-3.8-flash",
+    input: prompt,
+  });
+
+  const description = interaction.output_text?.trim();
+
+  if (!description) {
+    throw new Error("AI could not generate a product description");
+  }
+  return description;
+};
+
 module.exports = {
   generateAIResponse,
+  generateProductDescription,
 };
