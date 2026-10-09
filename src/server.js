@@ -19,6 +19,7 @@ const notificationRoutes = require("../src/E-Commerce/Notifications/notification
 const settingsRoutes = require("../src/E-Commerce/Settings/settings.routes");
 const adminUserRoutes = require("../src/E-Commerce/Admin/adminUser.routes");
 const adminProductRoutes = require("../src/E-Commerce/Admin/adminProduct.routes");
+const aiRoutes = require("../AI/ai.routes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -65,6 +66,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use("/api/admin/products", adminProductRoutes);
+app.use("/api/ai", aiRoutes);
 
 app.use((err, req, res, next) => {
   console.error("ERROR:", err);
