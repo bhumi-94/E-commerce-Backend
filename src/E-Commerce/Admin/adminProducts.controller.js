@@ -34,7 +34,8 @@ const addAdminProduct = async (req, res) => {
       is_featured,
     } = req.body;
 
-    const image = req.file ? `/uploads/products/${req.file.filename}` : null;
+    const image = req.file ? (req.file.secure_url || req.file.path) : null;
+    // const image = req.file ? `/uploads/products/${req.file.filename}` : null;
 
     const product = await addAdminProductService({
       name,
